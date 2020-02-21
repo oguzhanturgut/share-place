@@ -19,7 +19,7 @@ const DUMMY_PLACES = [
   },
   {
     id: 'p2',
-    title: 'Empire State Building',
+    title: 'Emp. State Building',
     description: 'One of the most famous sky scrapers in the world',
     imageUrl:
       'https://www.newyork.nl/wp-content/uploads/2013/11/Empire-State-Building-Tickets-300x226.jpg',
