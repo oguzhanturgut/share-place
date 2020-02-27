@@ -1,4 +1,5 @@
 const { v4: uuid } = require('uuid');
+const { validationResult } = require('express-validator');
 
 const HttpError = require('../models/http-error');
 
@@ -16,6 +17,22 @@ const getUsers = (req, res, next) => {
 };
 
 const signup = (req, res, next) => {
+  const errors = validationResult(req);
+  console.log(
+    errors
+      .array()
+      .map(e => e.msg)
+      .join('\n'),
+  );
+  if (!errors.isEmpty())
+    throw new HttpError(
+      errors
+        .array()
+        .map(e => e.msg)
+        .join('\n'),
+      422,
+    );
+
   const { name, email, password } = req.body;
   const user = DUMMY_USERS.find(user => user.email === email);
   if (user) throw new HttpError('User already exists', 422);
