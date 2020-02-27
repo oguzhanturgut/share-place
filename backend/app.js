@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
 const HttpError = require('./models/http-error');
 
 const placesRoutes = require('./routes/places-routes');
@@ -23,4 +24,10 @@ app.use((error, req, res, next) => {
   });
 });
 
-app.listen(5000);
+mongoose
+  .connect(
+    'mongodb+srv://class24:class24@cluster0-y7afm.mongodb.net/class24?retryWrites=true&w=majority',
+    { useNewUrlParser: true, useUnifiedTopology: true },
+  )
+  .then(() => app.listen(5000))
+  .catch(err => console.log(err));
