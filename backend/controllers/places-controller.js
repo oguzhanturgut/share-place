@@ -4,6 +4,8 @@ const { validationResult } = require('express-validator');
 const HttpError = require('../models/http-error');
 const getCoordsForAddress = require('../util/location');
 
+const Place = require('../models/place');
+
 let DUMMY_PLACES = [
   {
     id: 'p1',
@@ -18,23 +20,34 @@ let DUMMY_PLACES = [
   },
 ];
 
-const getPlaceById = (req, res) => {
+const getPlaceById = async (req, res, next) => {
   const { pid } = req.params;
-  const place = DUMMY_PLACES.find(place => place.id === pid);
+  let place;
+  try {
+    place = await Place.findById(pid).exec();
+  } catch (error) {
+    return next(new HttpError('Something went wrong, could not find the place'), 500);
+  }
 
-  if (!place) throw new HttpError('Could not find a place for provided id', 404);
+  if (!place) return next(new HttpError('Could not find a place for provided id', 404));
 
-  res.json({ place });
+  res.json({ place: place.toObject({ getters: true }) });
 };
 
-const getPlacesByUserId = (req, res, next) => {
+const getPlacesByUserId = async (req, res, next) => {
   const { uid: userId } = req.params;
-  const places = DUMMY_PLACES.filter(place => place.creator === userId);
+
+  let places;
+  try {
+    places = await Place.find({ creator: userId }).exec();
+  } catch (error) {
+    return next(new HttpError('Fetching places failed, please try again'), 500);
+  }
 
   if (!places || places.length === 0)
     return next(new HttpError('Could not find a place for provided user id', 404));
 
-  res.json({ places });
+  res.json({ places: places.map(place => place.toObject({ getters: true })) });
 };
 
 const createPlace = async (req, res, next) => {
@@ -51,47 +64,60 @@ const createPlace = async (req, res, next) => {
     return next(error);
   }
 
-  const newPlace = {
-    id: uuid(),
+  const newPlace = new Place({
     title,
     description,
-    location: coordinates,
     address,
+    location: coordinates,
+    image:
+      'https://upload.wikimedia.org/wikipedia/commons/1/10/Empire_State_Building_%28aerial_view%29.jpg',
     creator,
-  };
-  DUMMY_PLACES.push(newPlace);
+  });
+
+  try {
+    await newPlace.save();
+  } catch (error) {
+    return next(new HttpError('Creating place failed'), 500);
+  }
+
   res.status(201).json({ place: newPlace });
 };
 
-const updatePlaceById = (req, res, next) => {
+const updatePlaceById = async (req, res, next) => {
   const errors = validationResult(req);
-  console.log(errors.mapped());
-  if (!errors.isEmpty()) throw new HttpError('Invalid value', 422);
+  // console.log(errors.mapped());
+  if (!errors.isEmpty()) return next(new HttpError('Invalid value', 422));
 
   const { pid } = req.params;
   const { title, description } = req.body;
-  const place = DUMMY_PLACES.find(place => place.id === pid);
+
+  let place;
+  try {
+    place = await await Place.findByIdAndUpdate(
+      pid,
+      { title, description },
+      { new: true, useFindAndModify: false },
+    ).exec();
+  } catch (error) {
+    console.log(error);
+    return next(new HttpError('Something went wrong, could not update place', 500));
+  }
   if (place) {
-    const placeIndex = DUMMY_PLACES.findIndex(place => place.id === pid);
-    const updatedPlace = {
-      ...place,
-      title,
-      description,
-    };
-    DUMMY_PLACES[placeIndex] = updatedPlace;
-    res.status(200).json({ place: updatedPlace });
+    res.status(200).json({ place });
   } else {
-    throw new HttpError('Could not find a place for provided id', 404);
+    return next(new HttpError('Could not find a place for provided id', 404));
   }
 };
 
-const deletePlaceById = (req, res, next) => {
+const deletePlaceById = async (req, res, next) => {
   const { pid } = req.params;
 
-  if (!DUMMY_PLACES.find(place => place.id !== pid))
-    throw new HttpError('Could not find a place to delete', 404);
+  try {
+    await Place.findByIdAndDelete(pid).exec();
+  } catch (error) {
+    return next(new HttpError('Something went wrong, could not delete place'));
+  }
 
-  DUMMY_PLACES = DUMMY_PLACES.filter(place => place.id !== pid);
   res.status(200).json({ message: 'Deleted place' });
 };
 
