@@ -10,6 +10,16 @@ const app = express();
 
 app.use(bodyParser.json());
 
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept, Authorization',
+  );
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE');
+  next();
+});
+
 app.use('/api/places', placesRoutes);
 app.use('/api/users', usersRouters);
 
@@ -26,7 +36,7 @@ app.use((error, req, res, next) => {
 
 mongoose
   .connect(
-    'mongodb+srv://class24:class24@cluster0-y7afm.mongodb.net/class24?retryWrites=true&w=majority',
+    'mongodb+srv://class24:class24@cluster0-y7afm.mongodb.net/class24new?retryWrites=true&w=majority',
     { useNewUrlParser: true, useUnifiedTopology: true },
   )
   .then(() => app.listen(5000))
