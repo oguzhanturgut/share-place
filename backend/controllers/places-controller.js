@@ -69,7 +69,6 @@ const createPlace = async (req, res, next) => {
   }
 
   if (!user) return next(new HttpError('Could not find user for specified id'), 404);
-  console.log('TCL: createPlace -> user', user);
 
   try {
     const session = await mongoose.startSession();
