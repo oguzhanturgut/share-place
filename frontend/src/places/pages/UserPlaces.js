@@ -21,7 +21,10 @@ const UserPlaces = () => {
       } catch (error) {}
     })();
   }, [sendRequest, userId]);
-  console.log(loadedPlaces);
+  const onDeletePlace = deletedPlaceId => {
+    setLoadedPlaces(prevPlaces => prevPlaces.filter(place => places.id !== deletedPlaceId));
+  };
+
   return (
     <Fragment>
       <ErrorModal error={error} onClear={clearError} />
@@ -30,7 +33,9 @@ const UserPlaces = () => {
           <LoadingSpinner />
         </div>
       )}
-      {!isLoading && loadedPlaces && <PlaceList items={loadedPlaces} />}
+      {!isLoading && loadedPlaces && (
+        <PlaceList items={loadedPlaces} onDeletePlace={onDeletePlace} />
+      )}
     </Fragment>
   );
 };
