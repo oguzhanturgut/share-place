@@ -22,7 +22,7 @@ const UserPlaces = () => {
     })();
   }, [sendRequest, userId]);
   const onDeletePlace = deletedPlaceId => {
-    setLoadedPlaces(prevPlaces => prevPlaces.filter(place => places.id !== deletedPlaceId));
+    setLoadedPlaces(prevPlaces => prevPlaces.filter(place => place.id !== deletedPlaceId));
   };
 
   return (
