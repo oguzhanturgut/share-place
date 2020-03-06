@@ -1,4 +1,6 @@
 const { validationResult } = require('express-validator');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const User = require('../models/user');
 
@@ -38,11 +40,18 @@ const signup = async (req, res, next) => {
 
   if (existingUser) return next(new HttpError('User exists already'), 422);
 
+  let hashedPassword;
+  try {
+    hashedPassword = await bcrypt.hash(password, 12);
+  } catch (error) {
+    return next(new HttpError('Could not generate user', 500));
+  }
+
   const newUser = new User({
     name,
     email,
     image: req.file.path,
-    password,
+    password: hashedPassword,
     places: [],
   });
 
@@ -52,7 +61,16 @@ const signup = async (req, res, next) => {
     return next(new HttpError('Signing up failed'), 500);
   }
 
-  res.status(201).json({ user: newUser.toObject({ getters: true }) });
+  let token;
+  try {
+    token = jwt.sign({ userId: newUser.id, email: newUser.email }, 'asd#@Rdcf42rWewedfwWEFd', {
+      expiresIn: '1d',
+    });
+  } catch (error) {
+    return next(new HttpError('Signing up failed'), 500);
+  }
+
+  res.status(201).json({ userId: newUser.id, email: newUser.email, token });
 };
 
 const login = async (req, res, next) => {
@@ -64,9 +82,27 @@ const login = async (req, res, next) => {
     return next(new HttpError('Login failed'), 500);
   }
 
-  if (!validUser || validUser.password !== password)
-    return next(new HttpError('Invalid credentials', 401));
-  res.status(200).json({ message: 'Logged in', user: validUser.toObject({ getters: true }) });
+  if (!validUser) return next(new HttpError('Invalid credentials', 401));
+
+  let validPassword = false;
+  try {
+    validPassword = await bcrypt.compare(password, validUser.password);
+  } catch (error) {
+    return next(new HttpError('Could not login', 500));
+  }
+
+  if (!validPassword) return next(new HttpError('Invalid credentials', 401));
+
+  let token;
+  try {
+    token = jwt.sign({ userId: validUser.id, email: validUser.email }, 'asd#@Rdcf42rWewedfwWEFd', {
+      expiresIn: '1d',
+    });
+  } catch (error) {
+    return next(new HttpError('Login failed'), 500);
+  }
+
+  res.status(200).json({ userId: validUser.id, email: validUser.email, token });
 };
 
 exports.getUsers = getUsers;
