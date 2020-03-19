@@ -1,9 +1,9 @@
-import React, {useState, useCallback} from "react";
+import React, {useState, useCallback, useEffect} from "react";
 import {
-    BrowserRouter as Router,
-    Route,
-    Redirect,
-    Switch
+  BrowserRouter as Router,
+  Route,
+  Redirect,
+  Switch
 } from "react-router-dom";
 
 import Users from "./user/pages/Users";
@@ -15,66 +15,74 @@ import MainNavigation from "./shared/components/Navigation/MainNavigation";
 import {AuthContext} from "./shared/context/auth-context";
 
 const App = () => {
-    const [token, setToken] = useState(null);
-    const [userId, setUserId] = useState(false);
+  const [token, setToken] = useState(null);
+  const [userId, setUserId] = useState(false);
 
-    const login = useCallback((uuid, token) => {
-        setToken(token);
-        setUserId(uuid);
-    }, []);
+  const login = useCallback((uuid, token) => {
+    setToken(token);
+    setUserId(uuid);
+    localStorage.setItem('userData', JSON.stringify({userId: uuid, token}));
+  }, []);
 
-    const logout = useCallback(() => {
-        setToken(null);
-        setUserId(null);
-    }, []);
+  const logout = useCallback(() => {
+    setToken(null);
+    setUserId(null);
+    localStorage.removeItem('userData');
+  }, []);
 
-    let routes;
-
-    if (token) {
-        routes = (
-            <Switch>
-                <Route path="/" exact>
-                    <Users/>
-                </Route>
-                <Route path="/:userId/places" exact>
-                    <UserPlaces/>
-                </Route>
-                <Route path="/places/new" exact>
-                    <NewPlace/>
-                </Route>
-                <Route path="/places/:placeId">
-                    <UpdatePlace/>
-                </Route>
-                <Redirect to="/"/>
-            </Switch>
-        );
-    } else {
-        routes = (
-            <Switch>
-                <Route path="/" exact>
-                    <Users/>
-                </Route>
-                <Route path="/:userId/places" exact>
-                    <UserPlaces/>
-                </Route>
-                <Route path="/auth">
-                    <Auth/>
-                </Route>
-                <Redirect to="/auth"/>
-            </Switch>
-        );
+  useEffect(() => {
+    const storedData = JSON.parse(localStorage.getItem('userData'));
+    if (storedData && storedData.token) {
+      login(storedData.userId, storedData.token);
     }
+  }, [login]);
 
-    return (
-        <AuthContext.Provider
-            value={{isLoggedIn: !!token, token, userId, login, logout}}
-        >
-            <Router>
-                <MainNavigation/>
-                <main>{routes}</main>
-            </Router>
-        </AuthContext.Provider>
+  let routes;
+  if (token) {
+    routes = (
+      <Switch>
+        <Route path="/" exact>
+          <Users/>
+        </Route>
+        <Route path="/:userId/places" exact>
+          <UserPlaces/>
+        </Route>
+        <Route path="/places/new" exact>
+          <NewPlace/>
+        </Route>
+        <Route path="/places/:placeId">
+          <UpdatePlace/>
+        </Route>
+        <Redirect to="/"/>
+      </Switch>
     );
+  } else {
+    routes = (
+      <Switch>
+        <Route path="/" exact>
+          <Users/>
+        </Route>
+        <Route path="/:userId/places" exact>
+          <UserPlaces/>
+        </Route>
+        <Route path="/auth">
+          <Auth/>
+        </Route>
+        <Redirect to="/auth"/>
+      </Switch>
+    );
+  }
+
+  return (
+    <AuthContext.Provider
+      value={{isLoggedIn: !!token, token, userId, login, logout}}
+    >
+      <Router>
+        <MainNavigation/>
+        <main>{routes}</main>
+      </Router>
+    </AuthContext.Provider>
+  );
 };
 
 export default App;
