@@ -1,10 +1,10 @@
-import React, { Fragment, useEffect, useState } from 'react';
+import React, {Fragment, useEffect, useState} from 'react';
 
 import UsersList from '../components/UsersList';
 import ErrorModal from '../../shared/components/UIElements/ErrorModal';
 import LoadingSpinner from '../../shared/components/UIElements/LoadingSpinner';
 
-import { useHttpClient } from '../../shared/hooks/http-hook';
+import {useHttpClient} from '../../shared/hooks/http-hook';
 
 const Users = () => {
   const [loadedUsers, setLoadedUsers] = useState();
@@ -13,20 +13,21 @@ const Users = () => {
   useEffect(() => {
     (async () => {
       try {
-        const data = await sendRequest('http://localhost:5000/api/users');
+        const data = await sendRequest(`${process.env.REACT_APP_BACKEND_URL}/users`);
         setLoadedUsers(data.users);
-      } catch (error) {}
+      } catch (error) {
+      }
     })();
   }, [sendRequest]);
   return (
     <Fragment>
-      <ErrorModal error={error} onClear={clearError} />
+      <ErrorModal error={error} onClear={clearError}/>
       {isLoading && (
         <div className='center'>
-          <LoadingSpinner />
+          <LoadingSpinner/>
         </div>
       )}
-      {!isLoading && loadedUsers && <UsersList items={loadedUsers} />};
+      {!isLoading && loadedUsers && <UsersList items={loadedUsers}/>};
     </Fragment>
   );
 };

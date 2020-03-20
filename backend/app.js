@@ -45,8 +45,8 @@ app.use((error, req, res, next) => {
 
 mongoose
   .connect(
-    'mongodb+srv://class24:class24@cluster0-y7afm.mongodb.net/class24new?retryWrites=true&w=majority',
-    { useNewUrlParser: true, useUnifiedTopology: true },
+    process.env.DB_CONN,
+    {useNewUrlParser: true, useUnifiedTopology: true},
   )
   .then(() => app.listen(5000))
   .catch(err => console.log(err));
