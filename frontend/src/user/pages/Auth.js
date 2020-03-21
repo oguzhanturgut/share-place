@@ -1,4 +1,4 @@
-import React, {Fragment, useState, useContext} from "react";
+import React, {Fragment, useContext, useState} from "react";
 import {useForm} from "../../shared/hooks/form-hook";
 
 import {useHttpClient} from "../../shared/hooks/http-hook";
@@ -45,7 +45,7 @@ const Auth = () => {
     if (isLoginMode) {
       try {
         const data = await sendRequest(
-          "${process.env.REACT_APP_BACKEND_URL}/users/login",
+          `${process.env.REACT_APP_BACKEND_URL}/users/login`,
           "POST",
           JSON.stringify({
             email: formState.inputs.email.value,
